@@ -99,10 +99,6 @@ func (t Type) New(pattern string) (Matcher, error) {
 	case Substr:
 		return SubstrMatcher(pattern), nil
 	case Domain:
-		pattern, err := ToDomain(pattern)
-		if err != nil {
-			return nil, err
-		}
 		return DomainMatcher(pattern), nil
 	case Regex: // 1. regex matching is case-sensitive
 		regex, err := regexp.Compile(pattern)
@@ -111,7 +107,7 @@ func (t Type) New(pattern string) (Matcher, error) {
 		}
 		return &RegexMatcher{pattern: regex}, nil
 	default:
-		return nil, errors.New("unknown matcher type")
+		panic("Unknown type")
 	}
 }
 
@@ -219,10 +215,6 @@ type MatcherGroupForRegex interface {
 // It returns error if the MatcherGroup does not accept the provided Matcher's type.
 // This function is provided to help writing code to test a MatcherGroup.
 func AddMatcherToGroup(g MatcherGroup, matcher Matcher, value uint32) error {
-	if g, ok := g.(IndexMatcher); ok {
-		g.Add(matcher)
-		return nil
-	}
 	if g, ok := g.(MatcherGroupForAll); ok {
 		g.AddMatcher(matcher, value)
 		return nil
@@ -250,41 +242,4 @@ func AddMatcherToGroup(g MatcherGroup, matcher Matcher, value uint32) error {
 		}
 	}
 	return errors.New("cannot add matcher to matcher group")
-}
-
-// CompositeMatches flattens the matches slice to produce a single matched indices slice.
-// It is designed to avoid new memory allocation as possible.
-func CompositeMatches(matches [][]uint32) []uint32 {
-	switch len(matches) {
-	case 0:
-		return nil
-	case 1:
-		return matches[0]
-	default:
-		result := make([]uint32, 0, 5)
-		for i := 0; i < len(matches); i++ {
-			result = append(result, matches[i]...)
-		}
-		return result
-	}
-}
-
-// CompositeMatches flattens the matches slice to produce a single matched indices slice.
-// It is designed that:
-//  1. All matchers are concatenated in reverse order, so the matcher that matches further ranks higher.
-//  2. Indices in the same matcher keeps their original order.
-//  3. Avoid new memory allocation as possible.
-func CompositeMatchesReverse(matches [][]uint32) []uint32 {
-	switch len(matches) {
-	case 0:
-		return nil
-	case 1:
-		return matches[0]
-	default:
-		result := make([]uint32, 0, 5)
-		for i := len(matches) - 1; i >= 0; i-- {
-			result = append(result, matches[i]...)
-		}
-		return result
-	}
 }

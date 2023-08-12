@@ -50,7 +50,7 @@ func TestFullMatcherGroup(t *testing.T) {
 			Result: []uint32{4, 6},
 		},
 	}
-	g := NewFullMatcherGroup()
+	g := new(FullMatcherGroup)
 	for _, pattern := range patterns {
 		AddMatcherToGroup(g, FullMatcher(pattern.Pattern), pattern.Value)
 	}
@@ -63,7 +63,7 @@ func TestFullMatcherGroup(t *testing.T) {
 }
 
 func TestEmptyFullMatcherGroup(t *testing.T) {
-	g := NewFullMatcherGroup()
+	g := new(FullMatcherGroup)
 	r := g.Match("v2fly.org")
 	if len(r) != 0 {
 		t.Error("Expect [], but ", r)
